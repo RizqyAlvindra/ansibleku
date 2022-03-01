@@ -7,7 +7,7 @@
   
   - name: upgrade
     apt:
-       upgrade: dist
+      upgrade: dist
 
   - name: install docker dependencies
     apt:
