@@ -1,0 +1,58 @@
+- hosts: all
+  become: true
+  gather_facts: yes
+  tasks:
+    - name: "Update and upgrade systems"
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: "Install node exporter"
+      shell: "wget https://github.com/prometheus/node_exporter/releases/download/v0.15.2/node_exporter-0.15.2.linux-amd64.tar.gz; tar -xf node_exporter-0.15.2.linux-amd64.tar.gz; sudo mv node_exporter-0.15.2.linux-amd64/node_exporter /usr/local/bin; sudo useradd -rs /bin/false node_exporter"
+      args:
+        executable: /bin/bash
+
+    - name: "Create service for node exporter"
+      copy: 
+        src: node-exporter.service
+        dest: /etc/systemd/system/node-exporter.service
+
+    - name: "Reload service for node exporter"
+      shell: "sudo systemctl daemon-reload; sudo systemctl enable node-exporter; sudo systemctl start node-exporter"
+      args:
+        executable: /bin/bash
+
+    - name: "Install prometheus"
+      shell: "wget https://github.com/prometheus/prometheus/releases/download/v2.1.0/prometheus-2.1.0.linux-amd64.tar.gz; tar -xf prometheus-2.1.0.linux-amd64.tar.gz; sudo mv prometheus-2.1.0.linux-amd64/prometheus prometheus-2.1.0.linux-amd64/promtool /usr/local/bin; sudo mkdir /etc/prometheus /var/lib/prometheus; sudo mv prometheus-2.1.0.linux-amd64/consoles prometheus-2.1.0.linux-amd64/console_libraries /etc/prometheus"
+      args:
+        executable: /bin/bash
+
+    - name: "Add node exporter to prometheus"
+      copy: 
+        src: prometheus.yml
+        dest: /etc/prometheus/prometheus.yml
+
+    - name: "Add user prometheus"
+      shell: "sudo useradd -rs /bin/false prometheus; sudo chown -R prometheus: /etc/prometheus /var/lib/prometheus"
+      args:
+        executable: /bin/bash
+
+    - name: "Create service for prometheus"
+      copy: 
+        src: prometheus.service
+        dest: /etc/systemd/system/prometheus.service
+
+    - name: "Reload service for prometheus"
+      shell: "sudo systemctl daemon-reload; sudo systemctl enable prometheus; sudo systemctl start prometheus"
+      args:
+        executable: /bin/bash
+
+    - name: "Install grafana"
+      shell: 'sudo wget -q -O - https://packages.grafana.com/gpg.key | apt-key add -; sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"; sudo apt install grafana -y'
+      args:
+          executable: /bin/bash
+
+    - name: "Reload service for grafana"
+      shell: "sudo systemctl daemon-reload; sudo systemctl enable grafana-server; sudo systemctl start grafana-server"
+      args:
+        executable: /bin/bash

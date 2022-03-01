@@ -1,0 +1,24 @@
+- hosts: all
+  become: true
+  tasks:
+  - name: Create user
+    user:
+      name: alvin
+      password: "$6$1iAc4k8IMunxbIyj$p9QyQx7mSBCnIkt67PEpZFK5PzvIn1AA1AkV9Vu/ZDKplyb1gr08mp.7XsnjUHlt2P31lg.fV1SRnw1Au/Css1"
+      groups: sudo
+      state: present
+      shell: /bin/bash
+      system: no
+      createhome: yes
+      home: /home/alvin
+  
+  - name: change PasswordAuthentication
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: 'PasswordAuthentication no'
+      line: PasswordAuthentication yes
+
+  - name: reload sshd
+    systemd:
+      name: sshd
+      state: reloaded 
